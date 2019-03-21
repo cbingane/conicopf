@@ -1,5 +1,7 @@
 function [Vsdr, vsdr, usdr, cpusdr, statussdr, optsdr] = solve_orpd_shunt_sdr(casedata,model)
-[n, slack, angslack, pL, qL, gs, bs, vl, vu, nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen, nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
+[n, slack, angslack, pL, qL, gs, bs, vl, vu,...
+    nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
 isShunt = find(gs + 1j*bs);
 if (isempty(isShunt))
     [Vsdr, vsdr, cpusdr, statussdr, optsdr] = solve_opf_sdr(casedata,model);
