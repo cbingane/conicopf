@@ -46,7 +46,9 @@ cvx_begin
             if n <= 1000
                 [V(from(l),from(l)) V(from(l),to(l)); V(to(l),from(l)) V(to(l),to(l))] == hermitian_semidefinite(2)
             else
-                [V(from(l),from(l)) + V(to(l),to(l)) 0 2*V(from(l),to(l)); 0 V(from(l),from(l)) + V(to(l),to(l)) V(from(l),from(l)) - V(to(l),to(l)); 2*V(to(l),from(l)) V(from(l),from(l)) - V(to(l),to(l)) V(from(l),from(l)) + V(to(l),to(l))] == hermitian_semidefinite(3)
+                [V(from(l),from(l)) + V(to(l),to(l)) 0 2*V(from(l),to(l));...
+                    0 V(from(l),from(l)) + V(to(l),to(l)) V(from(l),from(l)) - V(to(l),to(l));...
+                    2*V(to(l),from(l)) V(from(l),from(l)) - V(to(l),to(l)) V(from(l),from(l)) + V(to(l),to(l))] == hermitian_semidefinite(3)
             end
             % FLOW LIMITS
             if (su(l) ~= 0)
