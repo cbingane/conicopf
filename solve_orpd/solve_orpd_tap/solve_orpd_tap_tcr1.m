@@ -1,5 +1,7 @@
 function [Vtcr, vtcr, ttcr, cputcr, statustcr, opttcr] = solve_orpd_tap_tcr1(casedata,model)
-[n, slack, angslack, pL, qL, gs, bs, vl, vu, nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen, nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
+[n, slack, angslack, pL, qL, gs, bs, vl, vu,...
+    nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
 isTap = find(spones(tap).*(1 - spones(shift)));
 if (isempty(isTap))
     [Vtcr, vtcr, cputcr, statustcr, opttcr] = solve_opf_tcr(casedata,model);
