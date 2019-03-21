@@ -49,7 +49,9 @@ cvx_begin
                 % CVX FRACTIONAL
                 tl(find(isTap == l))^2*W(find(isTap == l)) <= V(from(l),from(l)) <= tu(find(isTap == l))*Wf(find(isTap == l))
                 % SDP
-                [V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l)); Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l)); V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(3)
+                [V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l));...
+                    Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l));...
+                    V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(3)
             else
                 % NO TAP
                 pf(l) + 1j*qf(l) == conj(Yft{l}(1,1))*V(from(l),from(l)) + conj(Yft{l}(1,2))*V(from(l),to(l))

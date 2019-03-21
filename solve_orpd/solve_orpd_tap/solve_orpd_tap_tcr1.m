@@ -44,14 +44,18 @@ cvx_begin
                 % CVX FRACTIONAL
                 tl(find(isTap == l))^2*W(find(isTap == l)) <= V(from(l),from(l)) <= tu(find(isTap == l))*Wf(find(isTap == l))
                 % TCR
-                [1 v(from(l))' w(find(isTap == l))' v(to(l))'; v(from(l)) V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l)); w(find(isTap == l)) Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l)); v(to(l)) V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(4)
-%                 [1 w(find(isTap == l))' v(to(l))'; w(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l)); v(to(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(3)
+                [1 v(from(l))' w(find(isTap == l))' v(to(l))';...
+                    v(from(l)) V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l));...
+                    w(find(isTap == l)) Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l));...
+                    v(to(l)) V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(4)
             else
                 % NO TAP
                 pf(l) + 1j*qf(l) == conj(Yft{l}(1,1))*V(from(l),from(l)) + conj(Yft{l}(1,2))*V(from(l),to(l))
                 pt(l) + 1j*qt(l) == conj(Yft{l}(2,1))*V(to(l),from(l)) + conj(Yft{l}(2,2))*V(to(l),to(l))
                 % TCR
-                [1 v(from(l))' v(to(l))'; v(from(l)) V(from(l),from(l)) V(from(l),to(l)); v(to(l)) V(to(l),from(l)) V(to(l),to(l))] == hermitian_semidefinite(3)
+                [1 v(from(l))' v(to(l))';...
+                    v(from(l)) V(from(l),from(l)) V(from(l),to(l));...
+                    v(to(l)) V(to(l),from(l)) V(to(l),to(l))] == hermitian_semidefinite(3)
             end
             % FLOW LIMITS
             if (su(l) ~= 0)

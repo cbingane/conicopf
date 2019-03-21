@@ -1,4 +1,4 @@
-function [Vopt, vopt, topt, cpuopt, statusopt, valopt] = solve_orpd_tap_chr3(casedata,model)
+function [Vopt, vopt, topt, cpuopt, statusopt, valopt] = solve_orpd_tap_chr2(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu, nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen, nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
 isTap = find(spones(tap).*(1 - spones(shift)));
 if (isempty(isTap))
@@ -49,7 +49,9 @@ cvx_begin
                 % CVX FRACTIONAL
                 tl(find(isTap == l))*tu(find(isTap == l))*W(find(isTap == l)) + V(from(l),from(l)) <= (tl(find(isTap == l)) + tu(find(isTap == l)))*Wf(find(isTap == l))
                 % SDP
-                [V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l)); Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l)); V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(3)
+                [V(from(l),from(l)) Wf(find(isTap == l)) V(from(l),to(l));...
+                    Wf(find(isTap == l)) W(find(isTap == l)) Wt(find(isTap == l));...
+                    V(to(l),from(l)) Wt(find(isTap == l))' V(to(l),to(l))] == hermitian_semidefinite(3)
             else
                 % NO TAP
                 pf(l) + 1j*qf(l) == conj(Yft{l}(1,1))*V(from(l),from(l)) + conj(Yft{l}(1,2))*V(from(l),to(l))
