@@ -6,7 +6,7 @@ CONICOPF is a MATLAB-based package for solving conic relaxations of the optimal 
 
 + C. Bingane, M. F. Anjos, and S. Le Digabel. [Tight-and-cheap conic relaxation for the optimal reactive power dispatch problem](https://arxiv.org/abs/1810.03040). Technical Report G-2018-76, *Les cahiers du GERAD*, 2018.
 
-+ C. Bingane, M. F. Anjos, and S. Le Digabel. [CONICOPF : A tight-and-cheap conic relaxation with accuracy metrics for single-period and multi-period ACOPF problems](https://arxiv.org/abs/1903.09678). Technical Report G-2019-19, *Les cahiers du GERAD*, 2019.
++ C. Bingane, M. F. Anjos, and S. Le Digabel. [CONICOPF: A tight-and-cheap conic relaxation with accuracy metrics for single-period and multi-period ACOPF problems](https://arxiv.org/abs/1903.09678). Technical Report G-2019-19, *Les cahiers du GERAD*, 2019.
 
 ## Basic Requirements
 
