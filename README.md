@@ -14,4 +14,4 @@ Using CONICOPF requires that [MATPOWER](http://www.pserc.cornell.edu/matpower/) 
 
 ## License
 
-MIT
+[MIT](https://github.com/cbingane/conicopf/blob/master/LICENSE)
