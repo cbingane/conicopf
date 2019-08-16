@@ -1,4 +1,7 @@
 % 'opf_data.m' reads MATPOWER data file format
+% INPUTS
+%   casedata: MATPOWER case
+%   model: either 0 for loss minimization or 1 for cost minimization
 function [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
     nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model)
