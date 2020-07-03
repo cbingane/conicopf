@@ -1,23 +1,23 @@
-function [Vtcr, vtcr, utcr, ttcr, cputcr, statustcr, opttcr] = solve_orpd_tcr2(casedata,model)
+function [optval, optsol, Vopt, uopt, topt, cpu, status] = solve_orpd_tcr2(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
-    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
+    incidentF, incidentT, edges] = opf_data(casedata, model);
 isShunt = find(gs + 1j*bs); isTap = find(spones(tap).*(1 - spones(shift)));
 if (isempty(isShunt) && isempty(isTap))
-    [Vtcr, vtcr, cputcr, statustcr, opttcr] = solve_opf_tcr(casedata,model);
-    utcr =  []; ttcr = [];
+    [optval, optsol, Vopt, cpu, status] = solve_opf_tcr(casedata,model);
+    uopt =  []; topt = [];
 else
     if (~isempty(isShunt) && isempty(isTap))
-        [Vtcr, vtcr, utcr, cputcr, statustcr, opttcr] = solve_orpd_shunt_tcr(casedata,model);
-        ttcr = [];
+        [optval, optsol, Vopt, uopt, cpu, status] = solve_orpd_shunt_tcr(casedata,model);
+        topt = [];
     end
     if (isempty(isShunt) && ~isempty(isTap))
-        [Vtcr, vtcr, ttcr, cputcr, statustcr, opttcr] = solve_orpd_tap_tcr2(casedata,model);
-        utcr = [];
+        [optval, optsol, Vopt, topt, cpu, status] = solve_orpd_tap_tcr2(casedata,model);
+        uopt = [];
     end
     if (~isempty(isShunt) && ~isempty(isTap))
 Adj = adjacency(graph(edges(:,1),edges(:,2)));
-Vl = vl.^2; Vu = vu.^2;
 Yft = makeYft(nBranch,y,bsh,tap,shift);
 tl = 0.9*ones(length(isTap),1); tu = 1.1*ones(length(isTap),1);
 cvx_begin
@@ -47,7 +47,7 @@ cvx_begin
                 busgen(:,k)'*qG - qL(k) + bs(k)*V(k,k) == incidentF(:,k)'*qf + incidentT(:,k)'*qt
             end
             % VOLTAGE LIMITS
-            Vl(k) <= V(k,k) <= Vu(k)
+            vl(k)^2 <= V(k,k) <= vu(k)^2
         end
         % GENERATION LIMITS
         for g = 1:nGen
@@ -79,8 +79,8 @@ cvx_begin
             end
             % FLOW LIMITS
             if (su(l) ~= 0)
-                [su(l) pf(l) + 1j*qf(l); pf(l) - 1j*qf(l) su(l)] == hermitian_semidefinite(2)
-                [su(l) pt(l) + 1j*qt(l); pt(l) - 1j*qt(l) su(l)] == hermitian_semidefinite(2)
+                pf(l)^2 + qf(l)^2 <= su(l)^2
+                pt(l)^2 + qt(l)^2 <= su(l)^2
             end
             % DIFF PHASE LIMITS
             if (dl(l) > -pi/2 && du(l) < pi/2)
@@ -92,20 +92,18 @@ cvx_begin
         V(slack,slack) <= (vl(slack) + vu(slack))*(real(v(slack))*cos(angslack) + imag(v(slack))*sin(angslack)) - vl(slack)*vu(slack);
 cvx_end
 % Optimal solution
-cputcr = cvx_cputime;
-opttcr = cvx_optval; statustcr = cvx_status;
-Vtcr = V;
-vtcr = approx_volt_profile(Adj,Vtcr,slack,angslack);
+optval = cvx_optval; Vopt = V; cpu = cvx_cputime; status = cvx_status;
+optsol = {approx_volt_profile(Adj,Vopt,slack,angslack); pG + 1j*qG};
 uU = zeros(length(isShunt),1);
 for i=1:length(isShunt)
     uU(i) = U(i)/V(isShunt(i),isShunt(i));
 end
-utcr = [isShunt uU];
+uopt = [isShunt uU];
 tW = ones(length(isTap),1);
 for i=1:length(isTap)
     tW(i) = sqrt(V(from(isTap(i)),from(isTap(i)))/W(i));
 end
-ttcr = [isTap tW];
+topt = [isTap tW];
     end
 end
 end

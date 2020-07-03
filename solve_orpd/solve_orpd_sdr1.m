@@ -1,23 +1,23 @@
-function [Vsdr, vsdr, usdr, tsdr, cpusdr, statussdr, optsdr] = solve_orpd_sdr1(casedata,model)
+function [optval, optsol, Vopt, uopt, topt, cpu, status] = solve_orpd_sdr1(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
-    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
+    incidentF, incidentT, edges] = opf_data(casedata, model);
 isShunt = find(gs + 1j*bs); isTap = find(spones(tap).*(1 - spones(shift)));
 if (isempty(isShunt) && isempty(isTap))
-    [Vsdr, vsdr, cpusdr, statussdr, optsdr] = solve_opf_sdr(casedata,model);
-    usdr =  []; tsdr = [];
+    [optval, optsol, Vopt, cpu, status] = solve_opf_sdr(casedata,model);
+    uopt =  []; topt = [];
 else
     if (~isempty(isShunt) && isempty(isTap))
-        [Vsdr, vsdr, usdr, cpusdr, statussdr, optsdr] = solve_orpd_shunt_sdr(casedata,model);
-        tsdr = [];
+        [optval, optsol, Vopt, uopt, cpu, status] = solve_orpd_shunt_sdr(casedata,model);
+        topt = [];
     end
     if (isempty(isShunt) && ~ isempty(isTap))
-        [Vsdr, vsdr, tsdr, cpusdr, statussdr, optsdr] = solve_orpd_tap_sdr1(casedata,model);
-        usdr = [];
+        [optval, optsol, Vopt, topt, cpu, status] = solve_orpd_tap_sdr1(casedata,model);
+        uopt = [];
     end
     if (~isempty(isShunt) && ~ isempty(isTap))
 Adj = adjacency(graph(edges(:,1),edges(:,2)));
-Vl = vl.^2; Vu = vu.^2;
 Yft = makeYft(nBranch,y,bsh,tap,shift);
 tl = 0.9*ones(length(isTap),1); tu = 1.1*ones(length(isTap),1);
 cvx_begin
@@ -47,7 +47,7 @@ cvx_begin
                 busgen(:,k)'*qG - qL(k) + bs(k)*V(k,k) == incidentF(:,k)'*qf + incidentT(:,k)'*qt
             end
             % VOLTAGE LIMITS
-            Vl(k) <= V(k,k) <= Vu(k)
+            vl(k)^2 <= V(k,k) <= vu(k)^2
         end
         % GENERATION LIMITS
         for g = 1:nGen
@@ -74,8 +74,8 @@ cvx_begin
             end
             % FLOW LIMITS
             if (su(l) ~= 0)
-                [su(l) pf(l) + 1j*qf(l); pf(l) - 1j*qf(l) su(l)] == hermitian_semidefinite(2)
-                [su(l) pt(l) + 1j*qt(l); pt(l) - 1j*qt(l) su(l)] == hermitian_semidefinite(2)
+                pf(l)^2 + qf(l)^2 <= su(l)^2
+                pt(l)^2 + qt(l)^2 <= su(l)^2
             end
             % DIFF PHASE LIMITS
             if (dl(l) > -pi/2 && du(l) < pi/2)
@@ -84,20 +84,18 @@ cvx_begin
         end
 cvx_end
 % Optimal solution
-cpusdr = cvx_cputime;
-optsdr = cvx_optval; statussdr = cvx_status;
-Vsdr = V;
-vsdr = approx_volt_profile(Adj,Vsdr,slack,angslack);
+optval = cvx_optval; Vopt = V; cpu = cvx_cputime; status = cvx_status;
+optsol = {approx_volt_profile(Adj,Vopt,slack,angslack); pG + 1j*qG};
 uU = zeros(length(isShunt),1);
 for i=1:length(isShunt)
     uU(i) = U(i)/V(isShunt(i),isShunt(i));
 end
-usdr = [isShunt uU];
+uopt = [isShunt uU];
 tW = ones(length(isTap),1);
 for i=1:length(isTap)
     tW(i) = sqrt(V(from(isTap(i)),from(isTap(i)))/W(i));
 end
-tsdr = [isTap tW];
+topt = [isTap tW];
     end
 end
 end
