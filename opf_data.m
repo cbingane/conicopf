@@ -4,7 +4,8 @@
 %   model: either 0 for loss minimization or 1 for cost minimization
 function [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
-    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model)
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
+    incidentF, incidentT, edges] = opf_data(casedata, model)
 casedata = loadcase(casedata);
 mpc = ext2int(casedata);
 %% baseMVA
@@ -34,7 +35,7 @@ tap = sparse(branch(:,9));
 shift = sparse(branch(:,10)*pi/180);
 % flow limit
 su = sparse(branch(:,6)/base);
-% flow limit
+% angle difference
 dl = sparse(branch(:,12)*pi/180); du = sparse(branch(:,13)*pi/180);
 % incidence
 incidentF = sparse(1:nBranch,from,ones(nBranch,1),nBranch,n);
@@ -56,7 +57,5 @@ if size(gencost,2) == 6
     c2 = sparse(nGen,1)*base^2; c1 = sparse(gencost(:,5))*base; c0 = sparse(gencost(:,6));
 end
 if model == 0
-    c2 = sparse(nGen,1)*base^2;
-    c1 = ones(nGen,1)*base;
-    c0 = sparse(nGen,1);
+    c2 = sparse(nGen,1)*base^2; c1 = ones(nGen,1)*base; c0 = sparse(nGen,1);
 end
