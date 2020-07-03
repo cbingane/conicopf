@@ -1,9 +1,14 @@
-function [Vtcr, vtcr, cputcr, statustcr, opttcr] = solve_mpopf_tcr(casedata,model)
+% 'solve_mpopf_tcr.m' solves the tight-and-cheap relaxation of the
+% multi-period ACOPF problem
+% INPUTS
+%   casedata: MATPOWER case
+%   model: either 0 for loss minimization or 1 for cost minimization
+function [optval, optsol, Vopt, cpu, status] = solve_mpopf_tcr(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
-    nBranch, from, to, y, bsh, tap, shift, su, dl, du, incidentF, incidentT, edges] = opf_data(casedata, model);
+    nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
+    incidentF, incidentT, edges] = opf_data(casedata, model);
 Adj = adjacency(graph(edges(:,1),edges(:,2)));
-Vl = vl.^2; Vu = vu.^2;
 Yft = makeYft(nBranch,y,bsh,tap,shift);
 Tp = 24;
 lf = [0.950, 0.953, 0.950, 0.956, 0.962, 1.010, 1.100, 1.052,...
@@ -13,8 +18,8 @@ pL = pL*ones(Tp,1)'*diag(lf); qL = qL*ones(Tp,1)'*diag(lf);
 ramp = sparse(Tp-1,1); rl = ramp; ru = ramp;
 for tp=1:Tp-1
     ramp(tp) = sum(pL(:,tp+1) - pL(:,tp))/nGen;
-    rl(tp) = ramp(tp) - 0.01*abs(ramp(tp));
-    ru(tp) = ramp(tp) + 0.01*abs(ramp(tp));
+    rl(tp) = ramp(tp) - 0.1*abs(ramp(tp));
+    ru(tp) = ramp(tp) + 0.1*abs(ramp(tp));
 end
 cvx_begin
 %     cvx_precision low
@@ -31,7 +36,7 @@ cvx_begin
                 busgen(:,k)'*pG(:,tp) - pL(k,tp) - gs(k)*V(k,k,tp) == incidentF(:,k)'*pf(:,tp) + incidentT(:,k)'*pt(:,tp)
                 busgen(:,k)'*qG(:,tp) - qL(k,tp) + bs(k)*V(k,k,tp) == incidentF(:,k)'*qf(:,tp) + incidentT(:,k)'*qt(:,tp)
                 % VOLTAGE LIMITS
-                Vl(k) <= V(k,k,tp) <= Vu(k)
+                vl(k)^2 <= V(k,k,tp) <= vu(k)^2
             end
             % GENERATION LIMITS
             for g = 1:nGen
@@ -49,8 +54,8 @@ cvx_begin
                     v(to(l),tp) V(to(l),from(l),tp) V(to(l),to(l),tp)] == hermitian_semidefinite(3)
                 % FLOW LIMITS
                 if (su(l) ~= 0)
-                    [su(l) pf(l,tp) + 1j*qf(l,tp); pf(l,tp) - 1j*qf(l,tp) su(l)] == hermitian_semidefinite(2)
-                    [su(l) pt(l,tp) + 1j*qt(l,tp); pt(l,tp) - 1j*qt(l,tp) su(l)] == hermitian_semidefinite(2)
+                    pf(l,tp)^2 + qf(l,tp)^2 <= su(l)^2
+                    pt(l,tp)^2 + qt(l,tp)^2 <= su(l)^2
                 end
                 % DIFF PHASE LIMITS
                 if (dl(l) > -pi/2 && du(l) < pi/2)
@@ -66,12 +71,9 @@ cvx_begin
         end
 cvx_end
 % Optimal solution
-cputcr = cvx_cputime;
-opttcr = cvx_optval; statustcr = cvx_status;
-Vtcr = V;
-vtcr = sparse(n,Tp);
+optval = cvx_optval; Vopt = V; cpu = cvx_cputime; status = cvx_status;
+optsol = cell(Tp,1);
 for tp=1:Tp
-    vtcr(:,tp) = approx_volt_profile(Adj,Vtcr(:,:,tp),slack,angslack);
+    optsol{tp} = {approx_volt_profile(Adj,Vopt(:,:,tp),slack,angslack); pG(:,tp) + 1j*qG(:,tp)};
 end
-vtcr = [v vtcr];
 end

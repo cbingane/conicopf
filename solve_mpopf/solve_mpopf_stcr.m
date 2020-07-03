@@ -1,15 +1,14 @@
-% 'solve_mpopf_chr.m' solves the chordal relaxation of the
+% 'solve_mpopf_stcr.m' solves the strong tight-and-cheap relaxation of the
 % multi-period ACOPF problem
 % INPUTS
 %   casedata: MATPOWER case
 %   model: either 0 for loss minimization or 1 for cost minimization
-function [optval, optsol, Vopt, cpu, status] = solve_mpopf_chr(casedata,model)
+function [optval, optsol, Vopt, cpu, status] = solve_mpopf_stcr(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
     nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
     incidentF, incidentT, edges] = opf_data(casedata, model);
 Adj = adjacency(graph(edges(:,1),edges(:,2)));
-[~, bag] = chordamd(Adj);
 Yft = makeYft(nBranch,y,bsh,tap,shift);
 Tp = 24;
 lf = [0.950, 0.953, 0.950, 0.956, 0.962, 1.010, 1.100, 1.052,...
@@ -24,19 +23,13 @@ for tp=1:Tp-1
 end
 cvx_begin
 %     cvx_precision low
-%     cvx_solver sedumi
+%     cvx_solver sdpt3
     variable V(n,n,Tp) hermitian
     variables pf(nBranch,Tp) qf(nBranch,Tp) pt(nBranch,Tp) qt(nBranch,Tp)
     variables pG(nGen,Tp) qG(nGen,Tp)
     minimize ( sum(c2'*(pG.^2) + c1'*pG + sum(c0)) )
     subject to
         for tp=1:Tp
-            % CHR
-            for k = 1:n
-                if (~isempty(bag{k}))
-                    V(bag{k},bag{k},tp) == hermitian_semidefinite(length(bag{k}))
-                end
-            end
             for k=1:n
                 % PF EQUATIONS
                 busgen(:,k)'*pG(:,tp) - pL(k,tp) - gs(k)*V(k,k,tp) == incidentF(:,k)'*pf(:,tp) + incidentT(:,k)'*pt(:,tp)
@@ -54,6 +47,15 @@ cvx_begin
                 % FLOW INJECTION
                 pf(l,tp) + 1j*qf(l,tp) == conj(Yft{l}(1,1))*V(from(l),from(l),tp) + conj(Yft{l}(1,2))*V(from(l),to(l),tp)
                 pt(l,tp) + 1j*qt(l,tp) == conj(Yft{l}(2,1))*V(to(l),from(l),tp) + conj(Yft{l}(2,2))*V(to(l),to(l),tp)
+                % STCR
+                if (~ismember(slack,[from(l) to(l)]))
+                    [V(slack,slack,tp) V(slack,from(l),tp) V(slack,to(l),tp);...
+                        V(from(l),slack,tp) V(from(l),from(l),tp) V(from(l),to(l),tp);...
+                        V(to(l),slack,tp) V(to(l),from(l),tp) V(to(l),to(l),tp)] == hermitian_semidefinite(3)
+                elseif ((to(l) == slack && degree(graph(Adj),from(l)) == 1) || (from(l) == slack && degree(graph(Adj),to(l)) == 1))
+                   [V(from(l),from(l),tp) V(from(l),to(l),tp);...
+                       V(to(l),from(l),tp) V(to(l),to(l),tp)] == hermitian_semidefinite(2) 
+                end
                 % FLOW LIMITS
                 if (su(l) ~= 0)
                     pf(l,tp)^2 + qf(l,tp)^2 <= su(l)^2
