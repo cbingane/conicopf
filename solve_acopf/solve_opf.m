@@ -3,7 +3,7 @@
 % INPUTS
 %   casedata: MATPOWER case
 %   model: either 0 for loss minimization or 1 for cost minimization
-function [optval,optsol] = solve_opf(casedata,model)
+function [optval,optsol,time] = solve_opf(casedata,model)
 casedata = loadcase(casedata);
 mpc = ext2int(casedata);
 mpopt = mpoption('opf.ac.solver','mips');
@@ -24,5 +24,8 @@ else
     sol = runopf(mpc,mpopt);
 end
 optval = sol.f;
-optsol = sol.x(size(mpc.bus,1)+1:2*size(mpc.bus,1)).*exp(1j*sol.x(1:size(mpc.bus,1)));
+optsol = {sol.x(size(mpc.bus,1)+1:2*size(mpc.bus,1)).*exp(1j*sol.x(1:size(mpc.bus,1)));...
+    sol.x(2*size(mpc.bus,1)+1:2*size(mpc.bus,1)+size(mpc.gen,1))+...
+    1j*sol.x(2*size(mpc.bus,1)+size(mpc.gen,1)+1:2*size(mpc.bus,1)+2*size(mpc.gen,1))};
+time = sol.et;
 end
