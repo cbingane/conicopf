@@ -6,9 +6,7 @@
 function [optval,optsol,time] = solve_opf(casedata,model)
 casedata = loadcase(casedata);
 mpc = ext2int(casedata);
-mpopt = mpoption('opf.ac.solver','mips');
 if model == 0
-    % LOSS MINIMIZATION
     if size(mpc.gencost,2) == 7
         mpc.gencost(:,5) = 0;
         mpc.gencost(:,6) = 1;
@@ -18,11 +16,9 @@ if model == 0
         mpc.gencost(:,5) = 1;
         mpc.gencost(:,6) = 0;
     end
-    sol = runopf(mpc,mpopt);
-else
-    % COST MINIMIZATION
-    sol = runopf(mpc,mpopt);
 end
+mpopt = mpoption('opf.ac.solver','mips');
+sol = runopf(mpc,mpopt);
 optval = sol.f;
 optsol = {sol.x(size(mpc.bus,1)+1:2*size(mpc.bus,1)).*exp(1j*sol.x(1:size(mpc.bus,1)));...
     sol.x(2*size(mpc.bus,1)+1:2*size(mpc.bus,1)+size(mpc.gen,1))+...

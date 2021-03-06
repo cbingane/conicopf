@@ -4,7 +4,7 @@ function [optval, optsol, Vopt, cpu, status] = solve_opf_socr(casedata,model)
 [n, slack, angslack, pL, qL, gs, bs, vl, vu,...
     nGen, pGl, pGu, qGl, qGu, c2, c1, c0, busgen,...
     nBranch, from, to, y, bsh, tap, shift, su, dl, du,...
-    incidentF, incidentT, edges] = opf_data(casedata, model);
+    incidentF, incidentT, edges] = opf_data(casedata,model);
 Adj = adjacency(graph(edges(:,1),edges(:,2)));
 Yft = makeYft(nBranch,y,bsh,tap,shift);
 cvx_begin
@@ -33,21 +33,21 @@ cvx_begin
             pf(l) + 1j*qf(l) == conj(Yft{l}(1,1))*V(from(l),from(l)) + conj(Yft{l}(1,2))*V(from(l),to(l))
             pt(l) + 1j*qt(l) == conj(Yft{l}(2,1))*V(to(l),from(l)) + conj(Yft{l}(2,2))*V(to(l),to(l))
             % SOCR
-%             if n <= 1000
-                [V(from(l),from(l)) V(from(l),to(l)); V(to(l),from(l)) V(to(l),to(l))] == hermitian_semidefinite(2)
-%             else
-%                 [V(from(l),from(l)) + V(to(l),to(l)) 0 2*V(from(l),to(l));...
-%                     0 V(from(l),from(l)) + V(to(l),to(l)) V(from(l),from(l)) - V(to(l),to(l));...
-%                     2*V(to(l),from(l)) V(from(l),from(l)) - V(to(l),to(l)) V(from(l),from(l)) + V(to(l),to(l))] == hermitian_semidefinite(3)
-%             end
+            [V(from(l),from(l)) V(from(l),to(l)); V(to(l),from(l)) V(to(l),to(l))] == hermitian_semidefinite(2)
+%             [V(from(l),from(l)) + V(to(l),to(l)) 0 2*V(from(l),to(l));...
+%                 0 V(from(l),from(l)) + V(to(l),to(l)) V(from(l),from(l)) - V(to(l),to(l));...
+%                 2*V(to(l),from(l)) V(from(l),from(l)) - V(to(l),to(l)) V(from(l),from(l)) + V(to(l),to(l))] == hermitian_semidefinite(3)
             % FLOW LIMITS
             if (su(l) ~= 0)
-                pf(l)^2 + qf(l)^2 <= su(l)^2
-                pt(l)^2 + qt(l)^2 <= su(l)^2
+                abs(pf(l) + 1j*qf(l)) <= su(l)
+                abs(pt(l) + 1j*qt(l)) <= su(l)
             end
             % DIFF PHASE LIMITS
             if (dl(l) > -pi/2 && du(l) < pi/2)
                 tan(dl(l))*real(V(from(l),to(l))) <= imag(V(from(l),to(l))) <= tan(du(l))*real(V(from(l),to(l)))
+                % tightening
+                real(V(from(l),to(l)))*cos((du(l)+dl(l))/2) + imag(V(from(l),to(l)))*sin((du(l)+dl(l))/2) >= (vl(from(l))*vl(to(l)) + (vl(to(l))/(vl(from(l)) + vu(from(l))))*(V(from(l),from(l)) - vl(from(l))^2) + (vl(from(l))/(vl(to(l)) + vu(to(l))))*(V(to(l),to(l)) - vl(to(l))^2))*cos((du(l)-dl(l))/2)
+                real(V(from(l),to(l)))*cos((du(l)+dl(l))/2) + imag(V(from(l),to(l)))*sin((du(l)+dl(l))/2) >= (vu(from(l))*vu(to(l)) - (vu(to(l))/(vl(from(l)) + vu(from(l))))*(vu(from(l))^2 - V(from(l),from(l))) - (vu(from(l))/(vl(to(l)) + vu(to(l))))*(vu(to(l))^2 - V(to(l),to(l))))*cos((du(l)-dl(l))/2)
             end
         end
 cvx_end
