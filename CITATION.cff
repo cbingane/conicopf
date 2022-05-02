@@ -1,0 +1,27 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  CONICOPF: Conic relaxations of the optimal power
+  flow problem
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Christian
+    family-names: Bingane
+    email: christian.bingane@polymtl.ca
+    orcid: 'https://orcid.org/0000-0002-1980-5146'
+    affiliation: Polytechnique Montréal
+  - given-names: Miguel F.
+    family-names: Anjos
+    orcid: 'https://orcid.org/0000-0002-8258-9116'
+    affiliation: University of Edinburgh
+    email: Miguel.F.Anjos@ed.ac.uk
+  - given-names: Sébastien
+    family-names: Le Digabel
+    email: sebastien.le-digabel@polymtl.ca
+    affiliation: Polytechnique Montréal
+    orcid: 'https://orcid.org/0000-0003-3148-5090'
